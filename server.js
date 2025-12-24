@@ -13,29 +13,38 @@ const SERVICE_ACCOUNT_PATH = path.join(__dirname, 'demas-c0d1d-firebase-adminsdk
 async function initFirebase() {
   try {
     if (process.env.FIREBASE_SA) {
-      const sa = JSON.parse(process.env.FIREBASE_SA);
-      admin.initializeApp({ credential: admin.credential.cert(sa) });
-      console.log('Firebase admin initialized from env FIREBASE_SA');
-      return;
+      try {
+        const sa = JSON.parse(process.env.FIREBASE_SA);
+        admin.initializeApp({ credential: admin.credential.cert(sa) });
+        console.log('✓ Firebase admin initialized from env FIREBASE_SA');
+        return;
+      } catch (parseErr) {
+        console.error('✗ FIREBASE_SA JSON parse failed:', parseErr.message);
+        throw parseErr;
+      }
     }
   } catch (e) {
-    console.warn('FIREBASE_SA parse failed:', e && e.message ? e.message : e);
+    console.warn('FIREBASE_SA env var not usable, trying local file...');
   }
 
   try {
     const serviceAccount = require(SERVICE_ACCOUNT_PATH);
     admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    console.log('Firebase admin initialized from local service account file');
+    console.log('✓ Firebase admin initialized from local service account file');
   } catch (err) {
-    console.warn('Warning: could not load service account JSON at', SERVICE_ACCOUNT_PATH, '- firebase-admin may fail at runtime.');
-    try { admin.initializeApp(); } catch (e) { /* ignore */ }
+    console.error('✗ Firebase admin init failed:', err.message);
+    console.warn('Attempting fallback initialization...');
+    try { admin.initializeApp(); } catch (e) { console.error('Fallback also failed:', e.message); }
   }
 }
 
 initFirebase();
 
 let db = null;
-try { db = admin.firestore ? admin.firestore() : null; } catch (e) { db = null; }
+try { db = admin.firestore ? admin.firestore() : null; } catch (e) { 
+  console.error('Firestore instance creation failed:', e.message);
+  db = null; 
+}
 
 const app = express();
 app.use(cors());
