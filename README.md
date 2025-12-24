@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Simple Radio — Deployment README
 
 This repo contains a Node.js Express backend (`server.js`) and a single-page frontend (`index.html`). Below are recommended steps to publish the app using Google Cloud Run (backend) + Firebase Hosting (frontend). There is also an alternative quick-deploy path using Render.
@@ -68,3 +69,7 @@ Security checklist
 
 Troubleshooting
 - If Firestore fails to initialize in Cloud Run, verify the secret is available and the service account has adequate IAM permissions.
+=======
+# randomradio
+Have fun
+>>>>>>> badb9e0929ae9d0bf0fe6614ad4432e938906647
