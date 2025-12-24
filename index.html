@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Explore Radio — Community</title>
+  <style>
+    :root{--accent1:#667eea;--accent2:#764ba2}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;margin:0;background:linear-gradient(135deg,var(--accent1),var(--accent2));min-height:100vh;padding:24px;display:flex;align-items:center;justify-content:center}
+    .wrap{width:100%;max-width:980px;display:grid;grid-template-columns:1fr 420px;gap:22px}
+    .panel{background:#fff;border-radius:14px;padding:18px;box-shadow:0 20px 40px rgba(2,6,23,0.15)}
+    .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    .controls{display:flex;gap:8px;align-items:center}
+    .small-btn{background:#111;color:#fff;padding:8px 12px;border-radius:10px;border:none;cursor:pointer}
+    .profile{padding:6px 10px;border-radius:10px;background:#f3f4f8;color:#444}
+    .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}
+    .track{padding:10px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbff);box-shadow:0 6px 18px rgba(0,0,0,0.04);display:flex;flex-direction:column;gap:8px}
+    .t-title{font-weight:700;color:#111}
+    .t-meta{font-size:13px;color:#666}
+    .play-btn{padding:8px 12px;border-radius:10px;border:none;cursor:pointer;color:#fff;background:linear-gradient(90deg,var(--accent1),var(--accent2));font-weight:700}
+    .right{width:420px}
+    audio{width:100%;border-radius:8px}
+    input{padding:10px;border-radius:8px;border:1px solid #eee;width:100%;margin-top:8px}
+    .file-input-custom{padding:12px;border-radius:10px;border:2px dashed #eee;background:#fafafd;text-align:center;cursor:pointer;margin-top:8px}
+    .muted{color:#888;font-size:13px}
+
+    /* Responsive tweaks */
+    @media (max-width: 980px) {
+      body{padding:16px}
+      .wrap{max-width:900px;gap:16px}
+      .panel{padding:14px}
+    }
+
+    @media (max-width: 840px) {
+      .wrap{grid-template-columns:1fr;max-width:640px}
+      .panel.right{order:2}
+      .panel:first-child{order:1}
+      .right{width:100%}
+      .gallery{grid-template-columns:1fr}
+      .controls{flex-wrap:wrap;gap:6px}
+      .small-btn{padding:8px;border-radius:8px}
+      .play-btn{width:100%}
+      input{width:100%}
+      .file-input-custom{width:100%}
+      .logo{width:42px;height:42px}
+    }
+
+    @media (max-width: 420px) {
+      body{padding:12px}
+      .wrap{gap:12px}
+      .panel{padding:12px;border-radius:12px}
+      .logo{width:38px;height:38px}
+      .t-title{font-size:15px}
+      .t-meta{font-size:12px}
+      .muted{font-size:12px}
+      audio{height:44px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="logo">RR</div>
+          <div>
+            <div style="font-weight:800">Explore Radio — Community</div>
+            <div class="muted">Discover & share fresh tracks</div>
+          </div>
+        </div>
+        <div class="controls">
+          <div id="userBadge" class="profile">Not signed in</div>
+          <button id="btnShowLogin" class="small-btn">Sign In</button>
+          <button id="btnShowSignup" class="small-btn" style="background:transparent;border:1px solid rgba(0,0,0,0.06);color:#111">Sign Up</button>
+          <button id="btnLogout" class="small-btn" style="display:none;background:#eee;color:#111">Log Out</button>
+        </div>
+      </div>
+
+      <h4 style="margin-top:16px;color:#444">Public Exhibition</h4>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input id="searchInput" placeholder="Search titles or uploader" style="flex:1;padding:8px;border-radius:8px;border:1px solid #eee" />
+        <button id="btnSearch" class="small-btn">Search</button>
+        <button id="btnSearchWeb" class="small-btn" title="Search web (opens Google)">Web</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Browse community uploads — click play to listen. You can also add an external audio URL.</p>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <button id="btnAddExternal" class="small-btn" style="background:transparent;border:1px solid rgba(0,0,0,0.06);color:#111">Add External</button>
+        <button id="btnRefresh" class="small-btn">Refresh</button>
+      </div>
+      <div id="gallery" class="gallery"></div>
+    </div>
+
+    <div class="panel right">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <div id="playerTitle" style="font-weight:800">—</div>
+          <div id="playerUploader" class="muted">—</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button id="shareParty" class="small-btn" title="Share listening party">Share</button>
+          <button id="nextBtn" class="play-btn">▶️ Next</button>
+        </div>
+      </div>
+
+      <div style="position:relative">
+        <canvas id="visualizer" style="width:100%;height:90px;border-radius:8px;background:linear-gradient(90deg, rgba(230,230,255,0.6), rgba(245,245,255,0.5));display:block"></canvas>
+        <button id="bigPlay" style="position:absolute;right:14px;top:8px;z-index:10;padding:8px 12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#fff;font-weight:700">Play</button>
+      </div>
+
+      <audio id="audioPlayer" controls style="display:block;margin-top:8px"></audio>
+
+      <div style="height:12px"></div>
+      <div>
+          <h4 style="margin:0 0 6px 0;color:#444">Upload (members only)</h4>
+          <input id="titleInput" placeholder="Song title" />
+          <input id="uploaderInput" placeholder="Display name (optional)" />
+          <input type="file" id="fileInput" accept="audio/*" style="display:none" />
+          <div id="fileChooser" class="file-input-custom">📁 Choose audio file</div>
+          <div class="muted" style="margin-top:8px">Only audio files. Storage rules still apply.</div>
+          <button id="uploadBtn" class="play-btn" style="margin-top:8px">⬆️ Upload Track</button>
+          <div id="uploadStatus" class="muted" style="margin-top:8px"></div>
+          <div id="uploadProgressWrap" style="margin-top:8px;display:none">
+            <progress id="uploadProgress" value="0" max="100" style="width:100%"></progress>
+            <div id="uploadPercent" class="muted" style="text-align:right;font-size:12px;margin-top:4px">0%</div>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyARe9NWaWdRBSiB7q705fGA1m5Jy5SQkMI",
+      authDomain: "demas-c0d1d.firebaseapp.com",
+      projectId: "demas-c0d1d",
+      storageBucket: "demas-c0d1d.firebasestorage.app",
+      messagingSenderId: "711027415106",
+      appId: "1:711027415106:web:6a199ceb4d3ee00aeab5db",
+      measurementId: "G-6Z25D1XBER"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const storage = getStorage(app);
+
+    const gallery = document.getElementById('gallery');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playerTitle = document.getElementById('playerTitle');
+    const playerUploader = document.getElementById('playerUploader');
+    const nextBtn = document.getElementById('nextBtn');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileChooser = document.getElementById('fileChooser');
+    const fileInput = document.getElementById('fileInput');
+    const titleInput = document.getElementById('titleInput');
+    const uploaderInput = document.getElementById('uploaderInput');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const userBadge = document.getElementById('userBadge');
+    const btnShowLogin = document.getElementById('btnShowLogin');
+    const btnShowSignup = document.getElementById('btnShowSignup');
+    const btnLogout = document.getElementById('btnLogout');
+    const searchInput = document.getElementById('searchInput');
+    const btnSearch = document.getElementById('btnSearch');
+    const btnSearchWeb = document.getElementById('btnSearchWeb');
+    const btnAddExternal = document.getElementById('btnAddExternal');
+    const btnRefresh = document.getElementById('btnRefresh');
+    const shareParty = document.getElementById('shareParty');
+    const bigPlay = document.getElementById('bigPlay');
+    const visualizer = document.getElementById('visualizer');
+    const uploadProgressWrap = document.getElementById('uploadProgressWrap');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadPercent = document.getElementById('uploadPercent');
+
+    function setUser(username, token) {
+      if (username && token) { localStorage.setItem('rr_user', username); localStorage.setItem('rr_token', token); }
+      else { localStorage.removeItem('rr_user'); localStorage.removeItem('rr_token'); }
+      updateAuthUI();
+    }
+    function getToken(){ return localStorage.getItem('rr_token'); }
+
+    function updateAuthUI(){
+      const u = localStorage.getItem('rr_user');
+      if(u){ userBadge.textContent = u; btnShowLogin.style.display = 'none'; btnShowSignup.style.display = 'none'; btnLogout.style.display = 'inline-block'; }
+      else { userBadge.textContent = 'Not signed in'; btnShowLogin.style.display = 'inline-block'; btnShowSignup.style.display = 'inline-block'; btnLogout.style.display = 'none'; }
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+
+    // render helper
+    function renderGallery(items){
+      gallery.innerHTML='';
+      items.forEach(it=>{
+        const el=document.createElement('div'); el.className='track';
+        el.innerHTML=`<div class="t-title">${escapeHtml(it.title)}</div><div class="t-meta">by ${escapeHtml(it.uploader||'unknown')}</div>`;
+        const btn=document.createElement('button'); btn.className='play-btn'; btn.textContent='Play';
+        btn.addEventListener('click', ()=>{ playTrack(it); });
+        el.appendChild(btn);
+        gallery.appendChild(el);
+      });
+    }
+
+    async function loadGallery(){ try{ const res = await fetch('/api/songs?limit=100'); const items = await res.json(); renderGallery(items); }catch(e){console.error(e);} }
+
+    let currentSong = null;
+    function playTrack(track){ currentSong = track; playerTitle.textContent=track.title; playerUploader.textContent='by '+(track.uploader||'unknown'); audioPlayer.src=track.audioUrl; audioPlayer.play(); bigPlay.textContent = 'Pause'; }
+
+    nextBtn.addEventListener('click', async ()=>{ nextBtn.disabled=true; nextBtn.textContent='⏳'; try{ const r = await fetch('/api/random'); if(r.status===404){ alert('No songs yet'); } else { const j = await r.json(); playTrack(j); } }catch(e){console.error(e);} nextBtn.disabled=false; nextBtn.textContent='▶️ Next'; });
+
+    // Search and web search
+    btnSearch.addEventListener('click', async ()=>{
+      const q = (searchInput.value || '').trim().toLowerCase();
+      if(!q){ loadGallery(); return; }
+      try{
+        const res = await fetch('/api/songs?limit=100');
+        const items = await res.json();
+        const filtered = items.filter(i => (i.title||'').toLowerCase().includes(q) || (i.uploader||'').toLowerCase().includes(q));
+        renderGallery(filtered);
+      }catch(e){ console.error(e); }
+    });
+    btnRefresh.addEventListener('click', ()=>loadGallery());
+    btnSearchWeb.addEventListener('click', ()=>{
+      const q = (searchInput.value || '').trim();
+      if(!q) return window.open('https://www.google.com','_blank');
+      const query = `${q} site:youtube.com OR site:soundcloud.com OR site:bandcamp.com`;
+      window.open('https://www.google.com/search?q='+encodeURIComponent(query), '_blank');
+    });
+
+    // Add external audio URL as a gallery item (stores metadata in firestore)
+    btnAddExternal.addEventListener('click', async ()=>{
+      const title = prompt('Song title'); if(!title) return;
+      const uploader = prompt('Uploader / Artist name') || localStorage.getItem('rr_user') || 'external';
+      const url = prompt('Direct audio URL (mp3/ogg) or link to hosted audio'); if(!url) return;
+      const token = getToken(); if(!token){ alert('Sign in to add'); return; }
+      try{
+        const res = await fetch('/api/songs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({title,audioUrl:url})});
+        if(res.ok){ alert('Added to gallery'); loadGallery(); } else { const j=await res.json(); alert('Error: '+(j.error||res.status)); }
+      }catch(e){ console.error(e); alert('Error adding external'); }
+    });
+
+    fileChooser.addEventListener('click', ()=>fileInput.click());
+    fileInput.addEventListener('change',(e)=>{ if(e.target.files[0]) fileChooser.textContent='✅ '+e.target.files[0].name; });
+
+    // Party share link
+    shareParty.addEventListener('click', async ()=>{
+      if(!currentSong || !currentSong.id){ alert('No song is playing'); return; }
+      const url = window.location.origin + window.location.pathname + '?party=' + encodeURIComponent(currentSong.id);
+      try{ await navigator.clipboard.writeText(url); alert('Party link copied to clipboard'); }catch(e){ prompt('Copy this link:', url); }
+    });
+
+    // Big play button controls
+    bigPlay.addEventListener('click', ()=>{
+      if(audioPlayer.paused){ audioPlayer.play(); bigPlay.textContent='Pause'; }
+      else { audioPlayer.pause(); bigPlay.textContent='Play'; }
+    });
+    audioPlayer.addEventListener('play', ()=>{ bigPlay.textContent='Pause'; });
+    audioPlayer.addEventListener('pause', ()=>{ bigPlay.textContent='Play'; });
+
+    uploadBtn.addEventListener('click', async ()=>{
+      const token = getToken(); if(!token){ alert('Sign in to upload'); return; }
+      const file = fileInput.files[0]; const title = titleInput.value.trim(); const uploader = uploaderInput.value.trim() || localStorage.getItem('rr_user') || 'anonymous';
+      if(!file||!title){ alert('Please provide title and file'); return; }
+      const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+      if(file.size > MAX_BYTES){ alert('File too large. Max 10 MB.'); return; }
+
+      uploadBtn.disabled=true; uploadStatus.textContent='Uploading...';
+      uploadProgressWrap.style.display = 'block'; uploadProgress.value = 0; uploadPercent.textContent = '0%';
+      try{
+        const storageRef = ref(storage, 'songs/'+Date.now()+'-'+file.name);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        uploadTask.on('state_changed', (snapshot) => {
+          const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+          uploadProgress.value = pct;
+          uploadPercent.textContent = pct + '%';
+        }, (err) => {
+          console.error(err); uploadStatus.textContent='Upload failed'; uploadBtn.disabled=false; uploadProgressWrap.style.display='none';
+        }, async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          const res = await fetch('/api/songs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({title,audioUrl:url})});
+          if(res.ok){ uploadStatus.textContent='Uploaded'; fileInput.value=''; titleInput.value=''; fileChooser.textContent='📁 Choose audio file'; loadGallery(); }
+          else { const err = await res.json(); uploadStatus.textContent='Error: '+(err.error||res.status); }
+          uploadBtn.disabled=false; uploadProgressWrap.style.display='none';
+        });
+      }catch(e){ console.error(e); uploadStatus.textContent='Upload failed'; uploadBtn.disabled=false; uploadProgressWrap.style.display='none'; }
+    });
+
+    btnShowSignup.addEventListener('click', async ()=>{ const username=prompt('Choose username'); if(!username) return; const pwd=prompt('Password'); if(!pwd) return; try{ const r=await fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:pwd})}); if(r.ok) alert('Signed up — please sign in'); else { const j=await r.json(); alert('Signup failed: '+(j.error||r.status)); } }catch(e){alert('Signup error')} });
+
+    btnShowLogin.addEventListener('click', async ()=>{ const username=prompt('Username'); if(!username) return; const pwd=prompt('Password'); if(!pwd) return; try{ const r=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:pwd})}); if(r.ok){ const j=await r.json(); localStorage.setItem('rr_user', username); setUser(username,j.token); alert('Signed in'); loadGallery(); } else { const j=await r.json(); alert('Login failed: '+(j.error||r.status)); } }catch(e){alert('Login error')} });
+
+    btnLogout.addEventListener('click', ()=>{ setUser(null,null); alert('Signed out'); });
+
+    // Visualizer setup (Web Audio API)
+    function setupVisualizer(){
+      try{
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const src = ctx.createMediaElementSource(audioPlayer);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        src.connect(analyser);
+        analyser.connect(ctx.destination);
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        const canvas = visualizer;
+        const canvasCtx = canvas.getContext('2d');
+        function draw(){
+          requestAnimationFrame(draw);
+          analyser.getByteFrequencyData(dataArray);
+          const w = canvas.width; const h = canvas.height; canvasCtx.clearRect(0,0,w,h);
+          const barWidth = (w / bufferLength) * 1.2;
+          let x = 0;
+          for(let i=0;i<bufferLength;i++){
+            const v = dataArray[i]/255;
+            const barHeight = v * h;
+            const hue = Math.round(220 - (v*120));
+            canvasCtx.fillStyle = `hsl(${hue} 80% 60%)`;
+            canvasCtx.fillRect(x, h - barHeight, barWidth, barHeight);
+            x += barWidth + 1;
+          }
+        }
+        // resize canvas to match displayed size
+        function resizeCanvas(){ canvas.width = canvas.clientWidth * devicePixelRatio; canvas.height = canvas.clientHeight * devicePixelRatio; }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        draw();
+      }catch(e){ console.warn('visualizer not available', e); }
+    }
+
+    (function init(){ updateAuthUI(); loadGallery(); setupVisualizer();
+      // party param handling
+      const params = new URLSearchParams(window.location.search);
+      const partyId = params.get('party');
+      if(partyId){ (async ()=>{ try{ const res = await fetch('/api/songs?limit=200'); const items = await res.json(); const found = items.find(x=>x.id===partyId); if(found){ playTrack(found); } }catch(e){console.error(e);} })(); }
+    })();
+  </script>
+</body>
+</html>

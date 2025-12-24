@@ -1,0 +1,8 @@
+mkdir simple-radio
+cd simple-radio
+npm init -y
+npm install express firebase-admin cors
+
+# Run both servers in the background (use separate terminals or modify as needed)
+node server.js       # Runs on http://localhost:3000 (Firebase version)
+node random\ radio/app.js  # Runs on http://localhost:3001 (Mock version)
